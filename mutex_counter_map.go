@@ -1,6 +1,8 @@
 package countermap
 
-import "sync"
+import (
+	"sync"
+)
 
 func NewMutexCounterMap() *MutexCounterMap {
 	return &MutexCounterMap{counts: map[string]int64{}}
@@ -20,7 +22,10 @@ func (cm *MutexCounterMap) Inc(key string) {
 func (cm *MutexCounterMap) GetAndReset() map[string]int64 {
 	cm.lock.Lock()
 	defer cm.lock.Unlock()
-	ret := cm.counts
-	cm.counts = map[string]int64{}
-	return ret
+	counts := make(map[string]int64, len(cm.counts))
+	for k, v := range cm.counts {
+		counts[k] = v
+	}
+	cm.counts = make(map[string]int64)
+	return counts
 }

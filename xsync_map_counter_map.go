@@ -5,27 +5,26 @@ import (
 )
 
 func NewXSyncMapCounterMap() *XSyncMapCounterMap {
-	return &XSyncMapCounterMap{counts: xsync.NewMap()}
+	return &XSyncMapCounterMap{counts: xsync.NewMapOf[*xsync.Counter]()}
 }
 
 type XSyncMapCounterMap struct {
-	counts *xsync.Map
+	counts *xsync.MapOf[string, *xsync.Counter]
 }
 
 func (cm *XSyncMapCounterMap) Inc(key string) {
-	val, ok := cm.counts.Load(key)
-	if !ok {
-		val, _ = cm.counts.LoadOrStore(key, xsync.NewCounter())
-	}
-	val.(*xsync.Counter).Add(1)
+	c, _ := cm.counts.LoadOrCompute(key, func() *xsync.Counter {
+		return xsync.NewCounter()
+	})
+	c.Inc()
 }
 
 func (cm *XSyncMapCounterMap) GetAndReset() map[string]int64 {
-	ret := map[string]int64{}
-	cm.counts.Range(func(key string, val any) bool {
-		ret[key] = val.(*xsync.Counter).Value()
-		cm.counts.Delete(key)
+	ret := make(map[string]int64, cm.counts.Size())
+	cm.counts.Range(func(key string, val *xsync.Counter) bool {
+		ret[key] = val.Value()
 		return true
 	})
+	cm.counts.Clear()
 	return ret
 }

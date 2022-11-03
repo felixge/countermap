@@ -38,7 +38,7 @@ func (cm *SyncPointerCounterMap) Inc(key string) {
 func (cm *SyncPointerCounterMap) GetAndReset() map[string]int64 {
 	for {
 		oldCounts := cm.counts.Load()
-		retCounts := map[string]int64{}
+		retCounts := make(map[string]int64, len(*oldCounts))
 		for k, v := range *oldCounts {
 			retCounts[k] = v.Load()
 		}

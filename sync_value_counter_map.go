@@ -38,7 +38,7 @@ func (cm *SyncValueCounterMap) Inc(key string) {
 func (cm *SyncValueCounterMap) GetAndReset() map[string]int64 {
 	for {
 		oldCounts := cm.counts.Load().(*map[string]*atomic.Int64)
-		retCounts := map[string]int64{}
+		retCounts := make(map[string]int64, len(*oldCounts))
 		for k, v := range *oldCounts {
 			retCounts[k] = v.Load()
 		}
